@@ -108,7 +108,7 @@ const MobileLinkScanner: React.FC = () => {
                 </div>
 
                 <div className="glass-card rounded-2xl p-4">
-                  <h3 className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground"><Shield className="h-3.5 w-3.5 text-cyber-purple" /> VirusTotal</h3>
+                  <h3 className="mb-2 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground"><Shield className="h-3.5 w-3.5 text-cyber-light-blue" /> VirusTotal</h3>
                   <p className="text-sm font-bold text-score-warning">{result.virusTotal.detected}/{result.virusTotal.total} flagged</p>
                   <p className="text-xs text-muted-foreground">Score: {result.virusTotal.score}/100</p>
                 </div>

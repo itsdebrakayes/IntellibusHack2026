@@ -60,7 +60,7 @@ const exposureData = [
 ];
 
 const pieColors = [
-  "hsl(var(--cyber-purple))", "hsl(var(--cyber-red))", "hsl(var(--cyber-blue))",
+  "hsl(var(--cyber-light-blue))", "hsl(var(--cyber-red))", "hsl(var(--cyber-blue))",
   "hsl(var(--cyber-yellow))", "hsl(var(--cyber-teal))",
 ];
 
@@ -74,7 +74,7 @@ const item = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } };
 
 const statCards = [
   { label: "Total Threats", value: "7", icon: Shield, color: "cyber-red" },
-  { label: "Email Risk", value: "64%", icon: Mail, color: "cyber-purple" },
+  { label: "Email Risk", value: "64%", icon: Mail, color: "cyber-light-blue" },
   { label: "Password Risk", value: "42%", icon: Key, color: "cyber-yellow" },
   { label: "Data Leaks", value: "5", icon: Database, color: "cyber-teal" },
 ];
@@ -178,7 +178,7 @@ const BreachCheck: React.FC = () => {
       {showCentered ? (
         <motion.div variants={item} className="w-full max-w-xl space-y-6 text-center">
           <div className="flex flex-col items-center gap-3">
-            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-cyber-red/20 to-cyber-purple/20 text-cyber-red">
+            <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-cyber-red/20 to-cyber-light-blue/20 text-cyber-red">
               <ShieldAlert className="h-8 w-8" />
             </div>
             <h1 className="font-display text-2xl font-bold text-foreground">Breach Check</h1>
@@ -210,7 +210,7 @@ const BreachCheck: React.FC = () => {
         <>
           {/* Section 1: Public Breach Lookup */}
           <motion.div variants={item}>
-            <div className="glass-hero-purple overflow-hidden rounded-2xl p-6 text-white">
+            <div className="glass-hero-blue overflow-hidden rounded-2xl p-6 text-white">
               <div className="flex items-center gap-3 mb-4">
                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/20 backdrop-blur-sm">
                   <Search className="h-6 w-6" />
@@ -377,7 +377,7 @@ const BreachCheck: React.FC = () => {
                           <XAxis dataKey="name" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
                           <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} allowDecimals={false} />
                           <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "0.75rem", fontSize: "12px" }} />
-                          <Bar dataKey="count" fill="hsl(var(--cyber-purple))" radius={[8, 8, 0, 0]} />
+                          <Bar dataKey="count" fill="hsl(var(--cyber-light-blue))" radius={[8, 8, 0, 0]} />
                         </BarChart>
                       </ResponsiveContainer>
                     </div>

@@ -52,8 +52,8 @@ const VideoDetection: React.FC = () => {
           transition={{ duration: 0.5 }}
           className="w-full max-w-xl text-center"
         >
-          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-cyber-purple/20 to-cyber-blue/20">
-            <Clapperboard className="h-10 w-10 text-cyber-purple" />
+          <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-cyber-light-blue/20 to-cyber-blue/20">
+            <Clapperboard className="h-10 w-10 text-cyber-light-blue" />
           </div>
           <h1 className="font-display text-3xl font-bold text-foreground mb-2">Video Detection</h1>
           <p className="text-muted-foreground mb-8">Upload a video to analyze for deepfake indicators and manipulated frames</p>
@@ -84,7 +84,7 @@ const VideoDetection: React.FC = () => {
             ) : (
               <div className="flex flex-col items-center gap-4">
                 <div className="flex items-center gap-3 rounded-lg bg-muted px-4 py-3">
-                  <Video className="h-8 w-8 text-cyber-purple" />
+                  <Video className="h-8 w-8 text-cyber-light-blue" />
                   <div><p className="text-sm font-medium text-foreground">{file.name}</p><p className="text-xs text-muted-foreground">{(file.size / 1024 / 1024).toFixed(1)} MB</p></div>
                 </div>
                 <div className="flex gap-3">
@@ -113,7 +113,7 @@ const VideoDetection: React.FC = () => {
                   <p className="mt-2 font-display text-lg font-bold text-score-danger">{result.verdict}</p>
                 </CardContent></Card>
 
-                <Card><CardHeader className="pb-2"><CardTitle className="flex items-center gap-2 text-sm"><Clock className="h-4 w-4 text-cyber-purple" /> Detection Timeline</CardTitle></CardHeader>
+                <Card><CardHeader className="pb-2"><CardTitle className="flex items-center gap-2 text-sm"><Clock className="h-4 w-4 text-cyber-light-blue" /> Detection Timeline</CardTitle></CardHeader>
                   <CardContent><div className="space-y-3">
                     {result.timeline.map((t, i) => (
                       <div key={i} className={`flex items-start gap-3 rounded-lg p-3 ${severityBg(t.severity)}`}>

@@ -128,7 +128,7 @@ const LinkScanner: React.FC = () => {
                 <div className="grid gap-4 md:grid-cols-2">
                   <Card><CardHeader className="pb-2"><CardTitle className="flex items-center gap-2 text-sm"><Shield className="h-4 w-4 text-cyber-blue" /> Google Safe Browsing</CardTitle></CardHeader>
                     <CardContent><p className="text-lg font-bold text-score-danger">{result.googleSafeBrowsing.status}</p><p className="text-xs text-muted-foreground">Safety score: {result.googleSafeBrowsing.score}/100</p></CardContent></Card>
-                  <Card><CardHeader className="pb-2"><CardTitle className="flex items-center gap-2 text-sm"><Shield className="h-4 w-4 text-cyber-purple" /> VirusTotal</CardTitle></CardHeader>
+                  <Card><CardHeader className="pb-2"><CardTitle className="flex items-center gap-2 text-sm"><Shield className="h-4 w-4 text-cyber-light-blue" /> VirusTotal</CardTitle></CardHeader>
                     <CardContent><p className="text-lg font-bold text-score-warning">{result.virusTotal.detected}/{result.virusTotal.total} engines flagged</p><p className="text-xs text-muted-foreground">Safety score: {result.virusTotal.score}/100</p></CardContent></Card>
                 </div>
 

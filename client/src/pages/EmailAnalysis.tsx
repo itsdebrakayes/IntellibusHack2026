@@ -52,7 +52,7 @@ const EmailAnalysis: React.FC = () => {
       {showCentered ? (
         <div className="w-full max-w-xl space-y-6 text-center">
           <div className="flex flex-col items-center gap-3">
-            <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-cyber-yellow/20 to-cyber-purple/20 text-cyber-yellow">
+            <div className="flex h-20 w-20 items-center justify-center rounded-2xl bg-gradient-to-br from-cyber-yellow/20 to-cyber-light-blue/20 text-cyber-yellow">
               <Mail className="h-10 w-10" />
             </div>
             <h1 className="font-display text-2xl font-bold text-foreground">Email Analysis</h1>

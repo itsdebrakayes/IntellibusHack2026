@@ -1,31 +1,53 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Shield, Mail, Lock, ArrowRight, Eye, EyeOff } from "lucide-react";
+import { Shield, Mail, Lock, ArrowRight, Eye, EyeOff, User, Loader2 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/contexts/AuthContext";
+import { useIsMobile } from "@/hooks/use-mobile";
+import MobileAuth from "@/pages/mobile/MobileAuth";
 
 type AuthMode = "login" | "signup" | "forgot";
 
-const Auth: React.FC = () => {
+const DesktopAuth: React.FC = () => {
   const [mode, setMode] = useState<AuthMode>("login");
   const [showPassword, setShowPassword] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const { toast } = useToast();
+  const { signIn, signUp, resetPassword } = useAuth();
+  const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (mode === "forgot") {
-      toast({ title: "Reset link sent", description: "Check your email for password reset instructions." });
-      return;
+    setSubmitting(true);
+
+    try {
+      if (mode === "forgot") {
+        const { error } = await resetPassword(email);
+        if (error) { toast({ title: "Error", description: error, variant: "destructive" }); return; }
+        toast({ title: "Reset link sent", description: "Check your email for password reset instructions." });
+        setMode("login");
+        return;
+      }
+
+      if (mode === "login") {
+        const { error } = await signIn(email, password);
+        if (error) { toast({ title: "Sign in failed", description: error, variant: "destructive" }); return; }
+      } else {
+        const { error } = await signUp(email, password, name);
+        if (error) { toast({ title: "Sign up failed", description: error, variant: "destructive" }); return; }
+      }
+      navigate("/dashboard");
+    } finally {
+      setSubmitting(false);
     }
-    // Mock auth — just redirect
-    window.location.href = "/dashboard";
   };
 
   return (
@@ -45,11 +67,7 @@ const Auth: React.FC = () => {
               {mode === "login" ? "Welcome Back" : mode === "signup" ? "Create Account" : "Reset Password"}
             </CardTitle>
             <CardDescription>
-              {mode === "login"
-                ? "Sign in to your account"
-                : mode === "signup"
-                ? "Get started with CyberShield"
-                : "We'll send you a reset link"}
+              {mode === "login" ? "Sign in to your account" : mode === "signup" ? "Get started with CyberShield" : "We'll send you a reset link"}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -57,7 +75,10 @@ const Auth: React.FC = () => {
               {mode === "signup" && (
                 <div className="space-y-2">
                   <Label htmlFor="name">Full Name</Label>
-                  <Input id="name" placeholder="John Doe" value={name} onChange={(e) => setName(e.target.value)} />
+                  <div className="relative">
+                    <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                    <Input id="name" placeholder="John Doe" className="pl-10" value={name} onChange={(e) => setName(e.target.value)} />
+                  </div>
                 </div>
               )}
 
@@ -65,14 +86,7 @@ const Auth: React.FC = () => {
                 <Label htmlFor="email">Email</Label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="you@example.com"
-                    className="pl-10"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                  />
+                  <Input id="email" type="email" placeholder="you@example.com" className="pl-10" value={email} onChange={(e) => setEmail(e.target.value)} />
                 </div>
               </div>
 
@@ -89,11 +103,7 @@ const Auth: React.FC = () => {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                     />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
-                    >
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3 text-muted-foreground hover:text-foreground">
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
@@ -101,36 +111,23 @@ const Auth: React.FC = () => {
               )}
 
               {mode === "login" && (
-                <button
-                  type="button"
-                  onClick={() => setMode("forgot")}
-                  className="text-xs text-primary hover:underline"
-                >
+                <button type="button" onClick={() => setMode("forgot")} className="text-xs text-primary hover:underline">
                   Forgot password?
                 </button>
               )}
 
-              <Button type="submit" className="w-full">
+              <Button type="submit" className="w-full" disabled={submitting}>
+                {submitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                 {mode === "login" ? "Sign In" : mode === "signup" ? "Create Account" : "Send Reset Link"}
-                <ArrowRight className="ml-2 h-4 w-4" />
+                {!submitting && <ArrowRight className="ml-2 h-4 w-4" />}
               </Button>
             </form>
 
             <div className="mt-6 text-center text-sm text-muted-foreground">
               {mode === "login" ? (
-                <>
-                  Don't have an account?{" "}
-                  <button onClick={() => setMode("signup")} className="text-primary hover:underline">
-                    Sign up
-                  </button>
-                </>
+                <>Don't have an account?{" "}<button onClick={() => setMode("signup")} className="text-primary hover:underline">Sign up</button></>
               ) : (
-                <>
-                  Already have an account?{" "}
-                  <button onClick={() => setMode("login")} className="text-primary hover:underline">
-                    Sign in
-                  </button>
-                </>
+                <>Already have an account?{" "}<button onClick={() => setMode("login")} className="text-primary hover:underline">Sign in</button></>
               )}
             </div>
           </CardContent>
@@ -138,6 +135,11 @@ const Auth: React.FC = () => {
       </motion.div>
     </div>
   );
+};
+
+const Auth: React.FC = () => {
+  const isMobile = useIsMobile();
+  return isMobile ? <MobileAuth /> : <DesktopAuth />;
 };
 
 export default Auth;

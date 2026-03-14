@@ -1,5 +1,6 @@
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   Shield,
   Sun,
@@ -42,13 +43,19 @@ const navLinks = [
 
 const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { theme, toggleTheme } = useTheme();
+  const { user, signOut } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
+  const handleSignOut = () => {
+    signOut();
+    navigate("/login");
+  };
   return (
     <div className="min-h-screen bg-background">
       {/* Ambient color splotches */}
       <div className="fixed inset-0 -z-10 overflow-hidden">
-        <div className="absolute -left-32 -top-32 h-[500px] w-[500px] rounded-full bg-cyber-purple/15 blur-[120px] animate-[splotch-drift-1_12s_ease-in-out_infinite]" />
+        <div className="absolute -left-32 -top-32 h-[500px] w-[500px] rounded-full bg-cyber-light-blue/15 blur-[120px] animate-[splotch-drift-1_12s_ease-in-out_infinite]" />
         <div className="absolute -right-24 top-1/4 h-[400px] w-[400px] rounded-full bg-cyber-teal/10 blur-[120px] animate-[splotch-drift-2_15s_ease-in-out_infinite]" />
         <div className="absolute bottom-0 left-1/3 h-[450px] w-[450px] rounded-full bg-cyber-blue/10 blur-[120px] animate-[splotch-drift-3_18s_ease-in-out_infinite]" />
         <div className="absolute -bottom-20 right-1/4 h-[350px] w-[350px] rounded-full bg-cyber-red/10 blur-[100px] animate-[splotch-drift-4_14s_ease-in-out_infinite]" />
@@ -124,13 +131,17 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
+                {user && (
+                  <div className="px-2 py-1.5 text-xs text-muted-foreground border-b border-border mb-1">
+                    <div className="font-medium text-foreground">{user.fullName}</div>
+                    <div>{user.email}</div>
+                  </div>
+                )}
                 <DropdownMenuItem asChild>
                   <Link to="/settings">Settings</Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/login" className="flex items-center gap-2">
-                    <LogOut className="h-4 w-4" /> Sign Out
-                  </Link>
+                <DropdownMenuItem onClick={handleSignOut} className="flex items-center gap-2 cursor-pointer">
+                  <LogOut className="h-4 w-4" /> Sign Out
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

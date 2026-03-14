@@ -34,7 +34,7 @@ const breachSourceData = [
 ];
 
 const pieColors = [
-  "hsl(var(--cyber-purple))",
+  "hsl(var(--cyber-light-blue))",
   "hsl(var(--cyber-blue))",
   "hsl(var(--cyber-teal))",
   "hsl(var(--cyber-yellow))",

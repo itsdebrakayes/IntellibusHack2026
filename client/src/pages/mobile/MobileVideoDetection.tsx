@@ -45,8 +45,8 @@ const MobileVideoDetection: React.FC = () => {
           animate={{ opacity: 1, y: 0 }}
           className="w-full text-center"
         >
-          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-cyber-purple/20 to-cyber-blue/20">
-            <Clapperboard className="h-8 w-8 text-cyber-purple" />
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-cyber-light-blue/20 to-cyber-blue/20">
+            <Clapperboard className="h-8 w-8 text-cyber-light-blue" />
           </div>
           <h1 className="font-display text-2xl font-bold text-foreground mb-1">Video Detection</h1>
           <p className="text-sm text-muted-foreground mb-6">Analyze videos for deepfake indicators</p>
@@ -77,7 +77,7 @@ const MobileVideoDetection: React.FC = () => {
             ) : (
               <div className="flex flex-col items-center gap-3">
                 <div className="flex items-center gap-3 rounded-lg bg-muted px-4 py-3">
-                  <Video className="h-6 w-6 text-cyber-purple" />
+                  <Video className="h-6 w-6 text-cyber-light-blue" />
                   <div>
                     <p className="text-sm font-medium text-foreground">{file.name}</p>
                     <p className="text-xs text-muted-foreground">{(file.size / 1024 / 1024).toFixed(1)} MB</p>
@@ -109,7 +109,7 @@ const MobileVideoDetection: React.FC = () => {
                 </div>
                 <div className="glass-card rounded-2xl p-4">
                   <h3 className="mb-3 flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                    <Clock className="h-3.5 w-3.5 text-cyber-purple" /> Timeline
+                    <Clock className="h-3.5 w-3.5 text-cyber-light-blue" /> Timeline
                   </h3>
                   <div className="space-y-2">
                     {result.timeline.map((t, i) => (

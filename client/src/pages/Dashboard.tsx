@@ -36,7 +36,7 @@ const breachSourceData = [
 ];
 
 const pieColors = [
-  "hsl(var(--cyber-purple))",
+  "hsl(var(--cyber-light-blue))",
   "hsl(var(--cyber-blue))",
   "hsl(var(--cyber-teal))",
   "hsl(var(--cyber-yellow))",
@@ -82,7 +82,7 @@ const Dashboard: React.FC = () => {
     <motion.div variants={container} initial="hidden" animate="show" className="space-y-6">
       {/* Score hero OR Welcome hero */}
       <motion.div variants={item}>
-        <div className="glass-hero-purple dashboard-score-hero overflow-hidden rounded-[1.75rem] text-white">
+        <div className="glass-hero-blue dashboard-score-hero overflow-hidden rounded-[1.75rem] text-white">
           <AnimatePresence mode="wait">
             {!hasAccounts ? (
               <motion.div

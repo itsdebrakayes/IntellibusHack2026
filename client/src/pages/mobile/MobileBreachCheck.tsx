@@ -21,11 +21,11 @@ const exposureData = [
   { name: "Email", value: 6 }, { name: "Password", value: 4 }, { name: "Phone", value: 2 },
   { name: "IP", value: 3 }, { name: "Username", value: 5 },
 ];
-const pieColors = ["hsl(var(--cyber-purple))", "hsl(var(--cyber-red))", "hsl(var(--cyber-blue))", "hsl(var(--cyber-yellow))", "hsl(var(--cyber-teal))"];
+const pieColors = ["hsl(var(--cyber-light-blue))", "hsl(var(--cyber-red))", "hsl(var(--cyber-blue))", "hsl(var(--cyber-yellow))", "hsl(var(--cyber-teal))"];
 
 const statCards = [
   { label: "Threats", value: "7", icon: Shield, color: "cyber-red" },
-  { label: "Email Risk", value: "64%", icon: Mail, color: "cyber-purple" },
+  { label: "Email Risk", value: "64%", icon: Mail, color: "cyber-light-blue" },
   { label: "Passwords", value: "42%", icon: Key, color: "cyber-yellow" },
   { label: "Leaks", value: "5", icon: Database, color: "cyber-teal" },
 ];
@@ -62,7 +62,7 @@ const MobileBreachCheck: React.FC = () => {
       {showCentered ? (
         <motion.div variants={item} className="w-full space-y-5 text-center px-2">
           <div className="flex flex-col items-center gap-2">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-cyber-red/20 to-cyber-purple/20 text-cyber-red">
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-cyber-red/20 to-cyber-light-blue/20 text-cyber-red">
               <ShieldAlert className="h-7 w-7" />
             </div>
             <h1 className="font-display text-xl font-bold text-foreground">Breach Check</h1>
