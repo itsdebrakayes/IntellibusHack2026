@@ -109,8 +109,8 @@ const Dashboard: React.FC = () => {
                 {/* Pink panel — add accounts */}
                 <div className="border-t border-white/15 p-4 sm:p-5 lg:border-l lg:border-t-0">
                   <div className="glass-accent-pink h-full rounded-2xl p-5">
-                    <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-foreground/60">Add Accounts</h3>
-                    <p className="mb-4 text-sm leading-relaxed text-foreground/50">
+                    <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-primary-foreground">Add Accounts</h3>
+                    <p className="mb-4 text-sm leading-relaxed text-secondary">
                       Enter emails or social handles to start monitoring.
                     </p>
                     <div className="space-y-2.5">
