@@ -5,37 +5,14 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { api } from "@/lib/app";
 import MobileBreachCheck from "@/pages/mobile/MobileBreachCheck";
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertTriangle, Database, Eye, Globe, Key, Loader2, Lock, Mail, Phone, Plus, Search, Shield, ShieldAlert, Trash2 } from "lucide-react";
+import {
+  AlertTriangle, Database, Eye, Globe, Key, Loader2,
+  Lock, Mail, Phone, Plus, Search, Shield, ShieldAlert, Trash2
+} from "lucide-react";
 import React, { useState } from "react";
 import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
-const mockLookupResults = [
-  {
-    score: 28, breaches: 6,
-    exposedData: ["Email", "Password", "Phone", "IP Address", "Username"],
-    recentBreaches: [
-      { source: "SocialApp.io", date: "2025-11-14", records: "2.3M" },
-      { source: "ShopEasy.com", date: "2025-08-02", records: "890K" },
-      { source: "GameVault.gg", date: "2025-03-11", records: "1.5M" },
-    ],
-  },
-  {
-    score: 72, breaches: 2,
-    exposedData: ["Email", "Username"],
-    recentBreaches: [
-      { source: "OldForum.net", date: "2024-03-19", records: "120K" },
-      { source: "LeakedDB.com", date: "2023-07-05", records: "450K" },
-    ],
-  },
-  {
-    score: 91, breaches: 1,
-    exposedData: ["Email"],
-    recentBreaches: [
-      { source: "MinorSite.org", date: "2022-12-01", records: "30K" },
-    ],
-  },
-];
-
+// ─── Static mock accounts for the monitoring dashboard ───────────────────────
 const mockAccounts = [
   {
     email: "john.doe@gmail.com", score: 35, breaches: 4,
@@ -52,12 +29,13 @@ const mockAccounts = [
   },
 ];
 
-const exposureData = [
-  { name: "Email", value: 6, icon: Mail },
-  { name: "Password", value: 4, icon: Lock },
-  { name: "Phone", value: 2, icon: Phone },
-  { name: "IP Address", value: 3, icon: Globe },
-  { name: "Username", value: 5, icon: Eye },
+// Canonical exposure categories with icons
+const EXPOSURE_CATEGORIES = [
+  { name: "Email",    icon: Mail,  aliases: ["email addresses", "email"] },
+  { name: "Password", icon: Lock,  aliases: ["passwords", "password"] },
+  { name: "Phone",    icon: Phone, aliases: ["phone numbers", "phone"] },
+  { name: "IP Address", icon: Globe, aliases: ["ip addresses", "ip address"] },
+  { name: "Username", icon: Eye,   aliases: ["usernames", "username"] },
 ];
 
 const pieColors = [
@@ -65,29 +43,22 @@ const pieColors = [
   "hsl(var(--cyber-yellow))", "hsl(var(--cyber-teal))",
 ];
 
-const barData = [
-  { name: "2022", count: 1 }, { name: "2023", count: 2 },
-  { name: "2024", count: 1 }, { name: "2025", count: 3 },
-];
-
-const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.07 } } };
-const item = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } };
-
-const statCards = [
-  { label: "Total Threats", value: "7", icon: Shield, color: "cyber-red" },
-  { label: "Email Risk", value: "64%", icon: Mail, color: "cyber-light-blue" },
-  { label: "Password Risk", value: "42%", icon: Key, color: "cyber-yellow" },
-  { label: "Data Leaks", value: "5", icon: Database, color: "cyber-teal" },
-];
-
-interface LookupResult {
-  score: number;
-  breaches: number;
-  exposedData: string[];
-  recentBreaches: { source: string; date: string; records: string }[];
+// ─── Normalise raw data-class strings into canonical category names ───────────
+function normaliseExposedTypes(raw: string[]): string[] {
+  const result = new Set<string>();
+  raw.forEach((r) => {
+    const lower = r.toLowerCase().trim();
+    const match = EXPOSURE_CATEGORIES.find((c) =>
+      c.aliases.some((a) => lower.includes(a))
+    );
+    if (match) result.add(match.name);
+    // Keep as-is if no canonical match
+    else result.add(r);
+  });
+  return Array.from(result);
 }
 
-// Custom SVG Donut Chart matching reference aesthetic
+// ─── Custom SVG donut chart ───────────────────────────────────────────────────
 const DonutChart: React.FC<{
   data: { name: string; value: number }[];
   colors: string[];
@@ -101,12 +72,15 @@ const DonutChart: React.FC<{
 
   const segments: { startAngle: number; endAngle: number; color: string }[] = [];
   let currentAngle = -90;
-  data.forEach((d, i) => {
-    const sweepAngle = (d.value / total) * (360 - gapAngle * data.length);
+  const nonZero = data.filter((d) => d.value > 0);
+  const nonZeroTotal = nonZero.reduce((s, d) => s + d.value, 0) || 1;
+
+  nonZero.forEach((d, i) => {
+    const sweepAngle = (d.value / nonZeroTotal) * (360 - gapAngle * nonZero.length);
     segments.push({
       startAngle: currentAngle + gapAngle / 2,
       endAngle: currentAngle + sweepAngle + gapAngle / 2,
-      color: colors[i],
+      color: colors[data.indexOf(d) % colors.length],
     });
     currentAngle += sweepAngle + gapAngle;
   });
@@ -117,170 +91,168 @@ const DonutChart: React.FC<{
     const s1 = toRad(startDeg);
     const s2 = toRad(endDeg);
     const largeArc = endDeg - startDeg > 180 ? 1 : 0;
-    const ox1 = center + oR * Math.cos(s1);
-    const oy1 = center + oR * Math.sin(s1);
-    const ox2 = center + oR * Math.cos(s2);
-    const oy2 = center + oR * Math.sin(s2);
-    const ix1 = center + iR * Math.cos(s2);
-    const iy1 = center + iR * Math.sin(s2);
-    const ix2 = center + iR * Math.cos(s1);
-    const iy2 = center + iR * Math.sin(s1);
+    const ox1 = center + oR * Math.cos(s1), oy1 = center + oR * Math.sin(s1);
+    const ox2 = center + oR * Math.cos(s2), oy2 = center + oR * Math.sin(s2);
+    const ix1 = center + iR * Math.cos(s2), iy1 = center + iR * Math.sin(s2);
+    const ix2 = center + iR * Math.cos(s1), iy2 = center + iR * Math.sin(s1);
     return `M ${ox1} ${oy1} A ${oR} ${oR} 0 ${largeArc} 1 ${ox2} ${oy2} L ${ix1} ${iy1} A ${iR} ${iR} 0 ${largeArc} 0 ${ix2} ${iy2} Z`;
   };
 
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-      {segments.map((seg, i) => (
+      {segments.length === 0 ? (
         <path
-          key={i}
-          d={arcPathD(seg.startAngle, seg.endAngle, outerR, innerR)}
-          fill={seg.color}
-          className="transition-all duration-700 ease-out"
-          style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.15))" }}
+          d={arcPathD(-89, 270, outerR, innerR)}
+          fill="hsl(var(--muted))"
         />
-      ))}
+      ) : (
+        segments.map((seg, i) => (
+          <path
+            key={i}
+            d={arcPathD(seg.startAngle, seg.endAngle, outerR, innerR)}
+            fill={seg.color}
+            className="transition-all duration-700 ease-out"
+            style={{ filter: "drop-shadow(0 2px 4px rgba(0,0,0,0.15))" }}
+          />
+        ))
+      )}
       <text x={center} y={center - 6} textAnchor="middle" className="fill-muted-foreground" fontSize="10" fontWeight="500">Total</text>
       <text x={center} y={center + 14} textAnchor="middle" className="fill-foreground" fontSize="22" fontWeight="700" fontFamily="'Space Grotesk', sans-serif">{total}</text>
     </svg>
   );
 };
 
+// ─── Shared interface ─────────────────────────────────────────────────────────
+interface LookupResult {
+  score: number;
+  breaches: number;
+  exposedData: string[];          // normalised category names
+  recentBreaches: { source: string; date: string; records: string }[];
+  summary?: string;
+}
+
+const container = { hidden: { opacity: 0 }, show: { opacity: 1, transition: { staggerChildren: 0.07 } } };
+const item = { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0 } };
+
+// ─── Main component ───────────────────────────────────────────────────────────
 const BreachCheck: React.FC = () => {
   const isMobile = useIsMobile();
   const [lookupEmail, setLookupEmail] = useState("");
   const [lookupResult, setLookupResult] = useState<LookupResult | null>(null);
   const [isChecking, setIsChecking] = useState(false);
   const [newEmail, setNewEmail] = useState("");
-  const [hasAccounts] = useState(true); // toggle to false to show empty state
+  const [hasAccounts] = useState(true);
 
-  // DYNAMIC CALCULATIONS - Update when lookupResult changes
-  // Switch between checked email or default dashboard
-  // When lookupResult exists AND has breaches, use it; otherwise use mockAccounts
-  const isShowingLookup = lookupResult && lookupResult.breaches !== undefined;
-  
-  if (isShowingLookup) {
-    console.log("✅ SHOWING LOOKUP MODE - lookupResult:", lookupResult);
-  } else {
-    console.log("📊 SHOWING DASHBOARD MODE - lookupResult:", lookupResult);
-  }
-  
-  const currentData = isShowingLookup ? [lookupResult!] : mockAccounts;
-  
-  // Calculate base metrics
-  const totalBreaches = currentData.reduce((sum, a) => sum + a.breaches, 0);
-  const avgScore = isShowingLookup 
-    ? lookupResult!.score 
-    : Math.round(mockAccounts.reduce((sum, a) => sum + a.score, 0) / mockAccounts.length);
-  
-  // Calculate exposure breakdown
-  const exposureMap = new Map<string, number>();
-  currentData.forEach((account) => {
-    if (account.exposedData && Array.isArray(account.exposedData)) {
-      account.exposedData.forEach((type) => {
-        exposureMap.set(type, (exposureMap.get(type) || 0) + 1);
-      });
-    }
-  });
-  
-  // Build display data
-  const dynamicExposureData = exposureData.map((d) => ({
-    ...d,
-    value: exposureMap.get(d.name) || 0,
+  // ── Derive everything from lookupResult OR mockAccounts ──────────────────
+  const isShowingLookup = !!lookupResult;
+
+  // Accounts used for the monitoring dashboard section
+  const dashboardAccounts = mockAccounts;
+
+  // Counts for dashboard stats (always from mockAccounts)
+  const dashTotalBreaches = dashboardAccounts.reduce((s, a) => s + a.breaches, 0);
+  const dashAvgScore = Math.round(
+    dashboardAccounts.reduce((s, a) => s + a.score, 0) / dashboardAccounts.length
+  );
+
+  // Exposure breakdown — changes when a lookup result is shown
+  const activeExposedTypes: string[] = isShowingLookup
+    ? lookupResult!.exposedData
+    : Array.from(new Set(dashboardAccounts.flatMap((a) => a.exposedData)));
+
+  const exposureChartData = EXPOSURE_CATEGORIES.map((cat) => ({
+    name: cat.name,
+    icon: cat.icon,
+    value: activeExposedTypes.filter((t) => t === cat.name).length,
   }));
-  const totalExposure = dynamicExposureData.reduce((s, d) => s + d.value, 0);
-  
-  // Calculate risk percentages
-  const hasExposedData = isShowingLookup && lookupResult!.exposedData && lookupResult!.exposedData.length > 0;
-  const emailRisk = hasExposedData 
-    ? Math.round((lookupResult!.exposedData.filter(d => d === "Email").length / lookupResult!.exposedData.length) * 100)
+
+  const totalExposure = exposureChartData.reduce((s, d) => s + d.value, 0);
+
+  // Fallback: if none matched canonical cats, count unique raw strings
+  const rawCount = activeExposedTypes.length;
+
+  // Dynamic stat cards for the dashboard
+  const emailRisk = isShowingLookup
+    ? lookupResult!.exposedData.includes("Email") ? 80 : 20
     : 64;
-  const passwordRisk = hasExposedData
-    ? Math.round((lookupResult!.exposedData.filter(d => d === "Password").length / lookupResult!.exposedData.length) * 100)
+  const passwordRisk = isShowingLookup
+    ? lookupResult!.exposedData.includes("Password") ? 75 : 15
     : 42;
-  
-  // Build dynamic stat cards - NOW uses actual totalBreaches (3 when looking up, 5 on dashboard)
+
   const dynamicStatCards = [
-    { label: "Total Threats", value: String(totalBreaches), icon: Shield, color: "cyber-red" },
-    { label: "Email Risk", value: `${emailRisk}%`, icon: Mail, color: "cyber-light-blue" },
-    { label: "Password Risk", value: `${passwordRisk}%`, icon: Key, color: "cyber-yellow" },
-    { label: "Data Leaks", value: String(totalExposure > 0 ? totalExposure : totalBreaches), icon: Database, color: "cyber-teal" },
+    { label: "Total Threats",  value: String(isShowingLookup ? lookupResult!.breaches : dashTotalBreaches), icon: Shield, color: "cyber-red" },
+    { label: "Email Risk",     value: `${emailRisk}%`,    icon: Mail,     color: "cyber-light-blue" },
+    { label: "Password Risk",  value: `${passwordRisk}%`, icon: Key,      color: "cyber-yellow" },
+    { label: "Data Leaks",     value: String(totalExposure || rawCount || dashTotalBreaches), icon: Database, color: "cyber-teal" },
   ];
-  
-  console.log("📊 Stat Cards Being Rendered:", {
-    totalBreaches,
-    emailRisk,
-    passwordRisk,
-    totalExposure,
-    isShowingLookup,
-    dynamicStatCards,
-  });
 
-  // Helper function to extract exposed data types from breaches
-  const extractExposedTypes = (breaches: any[]): string[] => {
-    const types = new Set<string>();
-    breaches.forEach((b: any) => {
-      if (b.data_classes && Array.isArray(b.data_classes)) {
-        b.data_classes.forEach((dc: string) => types.add(dc));
-      }
-    });
-    return Array.from(types).length > 0 ? Array.from(types) : ["Email"];
-  };
+  // Bar chart — breach timeline (static for dashboard, derived for lookup)
+  const barData = isShowingLookup && lookupResult!.recentBreaches.length > 0
+    ? lookupResult!.recentBreaches.reduce<{ name: string; count: number }[]>((acc, b) => {
+        const year = b.date?.split("-")[0] || "Unknown";
+        const existing = acc.find((x) => x.name === year);
+        if (existing) existing.count += 1;
+        else acc.push({ name: year, count: 1 });
+        return acc;
+      }, []).sort((a, b) => a.name.localeCompare(b.name))
+    : [
+        { name: "2022", count: 1 }, { name: "2023", count: 2 },
+        { name: "2024", count: 1 }, { name: "2025", count: 3 },
+      ];
 
+  // ── API call ──────────────────────────────────────────────────────────────
   const handleLookup = async () => {
-  if (!lookupEmail.trim()) return;
-  setIsChecking(true);
-  setLookupResult(null);
-  try {
-    const data = await api("/api/breach/check", {
-      method: "POST",
-      body: JSON.stringify({ email: lookupEmail }),
-    });
-    
-    console.log("=== API Response ===");
-    console.log("Full response:", JSON.stringify(data, null, 2));
-    console.log("breach_count:", data.breach_count);
-    console.log("risk_score:", data.risk_score);
-    console.log("exposed_data_types:", data.exposed_data_types);
-    console.log("breaches array:", data.breaches);
-    
-    // Extract exposed types from breaches if not provided
-    const exposedTypesFromBreaches = extractExposedTypes(data.breaches || []);
-    console.log("Extracted exposed types:", exposedTypesFromBreaches);
-    
-    // Transform API response to component format
-    const transformed: LookupResult = {
-      score: data.risk_score || 0,
-      breaches: data.breach_count || 0,
-      exposedData: (data.exposed_data_types && data.exposed_data_types.length > 0) ? data.exposed_data_types : exposedTypesFromBreaches,
-      recentBreaches: data.breaches?.map((b: any) => ({
-        source: b.name || b.domain || "Unknown",
-        date: b.breach_date || b.date || "Unknown",
-        records: b.records_count?.toString() || "Unknown",
-      })) || [],
-    };
-    
-    console.log("=== Transformed Result ===");
-    console.log("score:", transformed.score);
-    console.log("breaches:", transformed.breaches);
-    console.log("exposedData:", transformed.exposedData);
-    console.log("Full transformed:", JSON.stringify(transformed, null, 2));
-    
-    setLookupResult(transformed);
-  } catch (err) {
-    console.error("Lookup Error:", err);
-  } finally {
-    setIsChecking(false);
-  }
-};
+    if (!lookupEmail.trim()) return;
+    setIsChecking(true);
+    setLookupResult(null);
+    try {
+      const data = await api("/api/breach/check", {
+        method: "POST",
+        body: JSON.stringify({ email: lookupEmail }),
+      });
+
+      // Extract data-class strings from breach entries
+      const rawTypes: string[] = [];
+      if (Array.isArray(data.exposed_data_types) && data.exposed_data_types.length > 0) {
+        rawTypes.push(...data.exposed_data_types);
+      } else if (Array.isArray(data.breaches)) {
+        data.breaches.forEach((b: any) => {
+          if (Array.isArray(b.data_classes)) rawTypes.push(...b.data_classes);
+        });
+      }
+      // Default to Email if nothing found but there are breaches
+      if (rawTypes.length === 0 && (data.breach_count || 0) > 0) {
+        rawTypes.push("Email");
+      }
+
+      const transformed: LookupResult = {
+        score: data.risk_score ?? 0,
+        breaches: data.breach_count ?? 0,
+        exposedData: normaliseExposedTypes(rawTypes),
+        recentBreaches: (data.breaches ?? []).map((b: any) => ({
+          source: b.name || b.domain || "Unknown",
+          date:   b.breach_date || b.date || "Unknown",
+          records: b.records_count?.toString() || "—",
+        })),
+        summary: data.summary,
+      };
+      setLookupResult(transformed);
+    } catch (err) {
+      console.error("Breach lookup error:", err);
+    } finally {
+      setIsChecking(false);
+    }
+  };
 
   if (isMobile) return <MobileBreachCheck />;
 
   const showCentered = !lookupResult && !isChecking && !hasAccounts;
 
   return (
-    <motion.div variants={container} initial="hidden" animate="show" className={showCentered ? "flex min-h-[calc(100vh-8rem)] flex-col items-center justify-center" : "space-y-6"}>
+    <motion.div variants={container} initial="hidden" animate="show"
+      className={showCentered ? "flex min-h-[calc(100vh-8rem)] flex-col items-center justify-center" : "space-y-6"}>
 
-      {/* Centered empty state when no accounts and no lookup */}
+      {/* ── Empty state ───────────────────────────────────────────────── */}
       {showCentered ? (
         <motion.div variants={item} className="w-full max-w-xl space-y-6 text-center">
           <div className="flex flex-col items-center gap-3">
@@ -288,19 +260,12 @@ const BreachCheck: React.FC = () => {
               <ShieldAlert className="h-8 w-8" />
             </div>
             <h1 className="font-display text-2xl font-bold text-foreground">Breach Check</h1>
-            <p className="text-sm text-muted-foreground max-w-sm">Check any email for known data breaches or add accounts to continuously monitor</p>
+            <p className="max-w-sm text-sm text-muted-foreground">Check any email for known data breaches or add accounts to continuously monitor</p>
           </div>
           <div className="glass-card rounded-2xl p-6 space-y-4">
             <div className="flex gap-3">
-              <Input
-                placeholder="Enter email to check for breaches…"
-                value={lookupEmail}
-                onChange={(e) => setLookupEmail(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleLookup()}
-              />
-              <Button onClick={handleLookup} disabled={!lookupEmail.trim()} className="shrink-0">
-                <Search className="mr-2 h-4 w-4" /> Check
-              </Button>
+              <Input placeholder="Enter email to check for breaches…" value={lookupEmail} onChange={(e) => setLookupEmail(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleLookup()} />
+              <Button onClick={handleLookup} disabled={!lookupEmail.trim()} className="shrink-0"><Search className="mr-2 h-4 w-4" /> Check</Button>
             </div>
             <div className="relative flex items-center justify-center">
               <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-border" /></div>
@@ -314,7 +279,7 @@ const BreachCheck: React.FC = () => {
         </motion.div>
       ) : (
         <>
-          {/* Section 1: Public Breach Lookup */}
+          {/* ── Lookup hero ────────────────────────────────────────────── */}
           <motion.div variants={item}>
             <div className="glass-hero-blue overflow-hidden rounded-2xl p-6 text-white">
               <div className="flex items-center gap-3 mb-4">
@@ -342,7 +307,7 @@ const BreachCheck: React.FC = () => {
             </div>
           </motion.div>
 
-          {/* Lookup Results */}
+          {/* ── Lookup results ──────────────────────────────────────────── */}
           <AnimatePresence>
             {(isChecking || lookupResult) && (
               <motion.div variants={item} initial="hidden" animate="show" exit={{ opacity: 0 }}>
@@ -350,43 +315,82 @@ const BreachCheck: React.FC = () => {
                   {isChecking ? (
                     <div className="flex flex-col items-center justify-center py-10 gap-3">
                       <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                      <p className="text-sm text-muted-foreground">Scanning breach databases for <span className="font-semibold text-foreground">{lookupEmail}</span>…</p>
+                      <p className="text-sm text-muted-foreground">
+                        Scanning breach databases for <span className="font-semibold text-foreground">{lookupEmail}</span>…
+                      </p>
                     </div>
                   ) : lookupResult && (
                     <div className="space-y-4">
+                      {/* Header row */}
                       <div className="flex items-center justify-between">
                         <h3 className="font-display text-lg font-bold text-foreground">Results for {lookupEmail}</h3>
-                        <span className={`rounded-full px-3 py-1 text-xs font-bold ${lookupResult.score >= 70 ? "bg-score-safe/10 text-score-safe" : lookupResult.score >= 40 ? "bg-score-warning/10 text-score-warning" : "bg-score-danger/10 text-score-danger"}`}>
+                        <span className={`rounded-full px-3 py-1 text-xs font-bold ${
+                          lookupResult.score >= 70 ? "bg-score-safe/10 text-score-safe"
+                          : lookupResult.score >= 40 ? "bg-score-warning/10 text-score-warning"
+                          : "bg-score-danger/10 text-score-danger"
+                        }`}>
                           {lookupResult.score >= 70 ? "Low Risk" : lookupResult.score >= 40 ? "Moderate Risk" : "High Risk"}
                         </span>
                       </div>
-                      <div className="flex flex-col gap-5 md:flex-row md:items-center">
+
+                      <div className="flex flex-col gap-5 md:flex-row md:items-start">
+                        {/* Gauge */}
                         <div className="flex-shrink-0">
                           <RiskGauge score={lookupResult.score} size={170} />
                         </div>
+
+                        {/* Details */}
                         <div className="flex-1 space-y-3">
-                          <div className="flex flex-wrap gap-2">
-                            {lookupResult.exposedData.map((d) => (
-                              <span key={d} className="rounded-full bg-destructive/10 px-3 py-1.5 text-xs font-semibold text-destructive">{d}</span>
-                            ))}
-                          </div>
+                          {/* Breach count */}
                           <p className="text-sm text-muted-foreground">
-                            Found in <span className="font-bold text-foreground">{lookupResult.breaches}</span> breach{lookupResult.breaches !== 1 && "es"}
+                            Found in <span className="font-bold text-foreground">{lookupResult.breaches}</span> known breach{lookupResult.breaches !== 1 && "es"}
                           </p>
-                          <div className="space-y-2">
-                            {lookupResult.recentBreaches.map((b) => (
-                              <div key={b.source} className="flex items-center justify-between rounded-xl bg-muted/50 px-4 py-3 backdrop-blur-sm">
-                                <div className="flex items-center gap-2.5">
-                                  <AlertTriangle className="h-4 w-4 text-score-warning" />
-                                  <span className="text-sm font-medium text-foreground">{b.source}</span>
-                                </div>
-                                <div className="text-right">
-                                  <span className="text-xs text-muted-foreground">{b.date}</span>
-                                  <span className="ml-4 text-xs font-medium text-muted-foreground">{b.records} records</span>
-                                </div>
+
+                          {/* Exposed data types */}
+                          {lookupResult.exposedData.length > 0 && (
+                            <div>
+                              <p className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Exposed Data Types</p>
+                              <div className="flex flex-wrap gap-2">
+                                {lookupResult.exposedData.map((d) => (
+                                  <span key={d} className="rounded-full bg-destructive/10 px-3 py-1.5 text-xs font-semibold text-destructive">{d}</span>
+                                ))}
                               </div>
-                            ))}
-                          </div>
+                            </div>
+                          )}
+
+                          {/* Summary from AI */}
+                          {lookupResult.summary && (
+                            <p className="rounded-xl bg-muted/60 px-4 py-3 text-sm text-foreground">{lookupResult.summary}</p>
+                          )}
+
+                          {/* Recent breaches list */}
+                          {lookupResult.recentBreaches.length > 0 && (
+                            <div className="space-y-2">
+                              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Known Breaches</p>
+                              {lookupResult.recentBreaches.map((b) => (
+                                <div key={b.source} className="flex items-center justify-between rounded-xl bg-muted/50 px-4 py-3 backdrop-blur-sm">
+                                  <div className="flex items-center gap-2.5">
+                                    <AlertTriangle className="h-4 w-4 text-score-warning" />
+                                    <span className="text-sm font-medium text-foreground">{b.source}</span>
+                                  </div>
+                                  <div className="text-right">
+                                    <span className="text-xs text-muted-foreground">{b.date}</span>
+                                    {b.records !== "—" && (
+                                      <span className="ml-4 text-xs font-medium text-muted-foreground">{b.records} records</span>
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          {/* Zero-breach result */}
+                          {lookupResult.breaches === 0 && (
+                            <div className="flex items-center gap-3 rounded-xl bg-score-safe/10 px-4 py-3">
+                              <Shield className="h-5 w-5 text-score-safe" />
+                              <p className="text-sm font-medium text-score-safe">Great news — no known breaches found for this email.</p>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -396,10 +400,9 @@ const BreachCheck: React.FC = () => {
             )}
           </AnimatePresence>
 
-          {/* Monitoring Section */}
+          {/* ── Monitoring dashboard ────────────────────────────────────── */}
           {hasAccounts && (
             <>
-              {/* Section Header */}
               <motion.div variants={item}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
@@ -409,12 +412,12 @@ const BreachCheck: React.FC = () => {
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <span>{mockAccounts.length} accounts</span>
                     <span>·</span>
-                    <span>{totalBreaches} breaches</span>
+                    <span>{dashTotalBreaches} breaches</span>
                   </div>
                 </div>
               </motion.div>
 
-              {/* Add account input */}
+              {/* Add account */}
               <motion.div variants={item}>
                 <div className="glass-card flex gap-3 rounded-2xl p-4">
                   <Input placeholder="Add email to ongoing monitoring…" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} className="border-transparent bg-transparent" />
@@ -422,7 +425,7 @@ const BreachCheck: React.FC = () => {
                 </div>
               </motion.div>
 
-              {/* Stat cards row */}
+              {/* Stat cards — update when lookup is active */}
               <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
                 {dynamicStatCards.map((s) => {
                   const Icon = s.icon;
@@ -442,41 +445,58 @@ const BreachCheck: React.FC = () => {
                 })}
               </div>
 
-              {/* Charts row: Risk Gauge + Donut + Bar */}
+              {/* Charts row */}
               <div className="grid gap-4 md:grid-cols-3">
-                {/* Risk Score Gauge */}
+                {/* Risk gauge */}
                 <motion.div variants={item}>
                   <div className="glass-card flex flex-col items-center justify-center rounded-2xl p-6">
-                    <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">Aggregate Risk</h3>
-                    <RiskGauge score={avgScore} size={180} label="Score" />
+                    <h3 className="mb-2 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      {isShowingLookup ? "Lookup Risk Score" : "Aggregate Risk"}
+                    </h3>
+                    <RiskGauge score={isShowingLookup ? lookupResult!.score : dashAvgScore} size={180} label="Score" />
                   </div>
                 </motion.div>
 
-                {/* Donut chart — custom SVG matching reference style */}
+                {/* Donut — exposure breakdown (dynamic) */}
                 <motion.div variants={item}>
                   <div className="glass-card rounded-2xl p-5">
-                    <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Data Exposure</h3>
+                    <h3 className="mb-1 text-xs font-bold uppercase tracking-wider text-muted-foreground">Data Exposure</h3>
+                    {isShowingLookup && (
+                      <p className="mb-3 text-[11px] text-muted-foreground">Showing: {lookupEmail}</p>
+                    )}
                     <div className="flex items-center gap-5">
                       <div className="relative flex-shrink-0">
-                        <DonutChart data={dynamicExposureData} colors={pieColors} size={140} total={totalExposure} />
+                        <DonutChart
+                          data={exposureChartData}
+                          colors={pieColors}
+                          size={140}
+                          total={totalExposure || rawCount}
+                        />
                       </div>
                       <div className="min-w-0 flex-1 space-y-3">
-                        {dynamicExposureData.map((d, i) => (
-                          <div key={d.name} className="flex items-center gap-2.5">
-                            <div className="h-3 w-3 rounded-full flex-shrink-0" style={{ backgroundColor: pieColors[i] }} />
-                            <span className="text-xs font-medium text-foreground">{d.name}</span>
-                            <span className="ml-auto text-xs font-bold text-foreground">{d.value}</span>
-                          </div>
-                        ))}
+                        {exposureChartData.map((d, i) => {
+                          const Icon = d.icon;
+                          return (
+                            <div key={d.name} className="flex items-center gap-2.5">
+                              <div className="h-3 w-3 rounded-full flex-shrink-0" style={{ backgroundColor: pieColors[i] }} />
+                              <Icon className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                              <span className="text-xs font-medium text-foreground">{d.name}</span>
+                              <span className="ml-auto text-xs font-bold text-foreground">{d.value}</span>
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
                   </div>
                 </motion.div>
 
-                {/* Bar chart */}
+                {/* Bar chart — breach timeline (dynamic) */}
                 <motion.div variants={item}>
                   <div className="glass-card rounded-2xl p-5">
-                    <h3 className="mb-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">Breach Timeline</h3>
+                    <h3 className="mb-1 text-xs font-bold uppercase tracking-wider text-muted-foreground">Breach Timeline</h3>
+                    {isShowingLookup && (
+                      <p className="mb-3 text-[11px] text-muted-foreground">Showing: {lookupEmail}</p>
+                    )}
                     <div className="h-48">
                       <ResponsiveContainer width="100%" height="100%">
                         <BarChart data={barData}>
