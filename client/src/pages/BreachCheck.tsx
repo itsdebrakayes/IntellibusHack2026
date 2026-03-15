@@ -211,32 +211,34 @@ const BreachCheck: React.FC = () => {
         body: JSON.stringify({ email: lookupEmail }),
       });
 
-      // Extract data-class strings from breach entries
+      // Collect data_classes from all breaches
       const rawTypes: string[] = [];
-      if (Array.isArray(data.exposed_data_types) && data.exposed_data_types.length > 0) {
-        rawTypes.push(...data.exposed_data_types);
-      } else if (Array.isArray(data.breaches)) {
+      if (Array.isArray(data.breaches)) {
         data.breaches.forEach((b: any) => {
-          if (Array.isArray(b.data_classes)) rawTypes.push(...b.data_classes);
+          if (Array.isArray(b.data_classes) && b.data_classes.length > 0) {
+            rawTypes.push(...b.data_classes);
+          }
         });
       }
-      // Default to Email if nothing found but there are breaches
-      if (rawTypes.length === 0 && (data.breach_count || 0) > 0) {
-        rawTypes.push("Email");
-      }
 
-      const transformed: LookupResult = {
+      // If API returned no data_classes at all, fall back to ["Email"] since email was breached
+      const exposedData = rawTypes.length > 0
+        ? normaliseExposedTypes(rawTypes)
+        : data.breach_count > 0
+          ? ["Email"]
+          : [];
+
+      setLookupResult({
         score: data.risk_score ?? 0,
         breaches: data.breach_count ?? 0,
-        exposedData: normaliseExposedTypes(rawTypes),
+        exposedData,
         recentBreaches: (data.breaches ?? []).map((b: any) => ({
           source: b.name || b.domain || "Unknown",
-          date:   b.breach_date || b.date || "Unknown",
+          date: b.breach_date && b.breach_date !== "Unknown" ? b.breach_date : "Date unknown",
           records: b.records_count?.toString() || "—",
         })),
         summary: data.summary,
-      };
-      setLookupResult(transformed);
+      });
     } catch (err) {
       console.error("Breach lookup error:", err);
     } finally {
