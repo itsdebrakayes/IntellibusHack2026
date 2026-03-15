@@ -98,4 +98,26 @@ def get_dashboard_summary(user_id: str):
         "high_risk_count": len([
             x for x in breaches + analyses if x["risk_score"] >= 70
         ]),
+
+        
     }
+# ─── media Summary ────────────────────────────────────────────────────────
+def save_media_scan(user_id: str, media_type: str, filename: str,
+                    risk_score: int, result: dict):
+    supabase.table("media_scans").insert({
+        "user_id": user_id,
+        "media_type": media_type,
+        "filename": filename,
+        "risk_score": risk_score,
+        "result": result,
+    }).execute()
+
+
+def get_media_history(user_id: str):
+    res = supabase.table("media_scans")\
+        .select("*")\
+        .eq("user_id", user_id)\
+        .order("created_at", desc=True)\
+        .limit(20)\
+        .execute()
+    return res.data

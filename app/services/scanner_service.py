@@ -10,11 +10,9 @@ GSB_URL = "https://safebrowsing.googleapis.com/v4/threatMatches:find"
 
 THREAT_TYPES = [
     "MALWARE",
-    "SOCIAL_ENGINEERING",   # Phishing
+    "SOCIAL_ENGINEERING",
     "UNWANTED_SOFTWARE",
-    "POTENTIALLY_HARMFUL_APPLICATION",
 ]
-
 async def check_google_safe_browsing(url: str) -> List[str]:
     """
     Check a URL against Google Safe Browsing API.
@@ -105,10 +103,6 @@ def calculate_link_risk_score(
     gsb_flags: List[str],
     vt_result: Optional[VirusTotalResult]
 ) -> Tuple[int, str, bool]:
-    """
-    Combine GSB and VirusTotal signals into a single 0-100 risk score.
-    Returns (score, label, is_safe)
-    """
     score = 0
 
     # Google Safe Browsing is high-confidence — weight heavily
@@ -119,10 +113,18 @@ def calculate_link_risk_score(
     if "UNWANTED_SOFTWARE" in gsb_flags:
         score += 40
 
-    # VirusTotal contribution
+    # VirusTotal — improved scoring
     if vt_result:
-        vt_ratio = vt_result.malicious_count / max(vt_result.total_engines, 1)
-        score += int(vt_ratio * 40)  # Up to 40 points from VT
+        if vt_result.malicious_count >= 15:
+            score += 70
+        elif vt_result.malicious_count >= 10:
+            score += 55
+        elif vt_result.malicious_count >= 5:
+            score += 40
+        elif vt_result.malicious_count >= 2:
+            score += 25
+        elif vt_result.malicious_count >= 1:
+            score += 15
 
     score = min(score, 100)
     is_safe = score < 20
@@ -137,3 +139,5 @@ def calculate_link_risk_score(
         label = "Safe"
 
     return score, label, is_safe
+
+

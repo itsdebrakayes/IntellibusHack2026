@@ -26,6 +26,10 @@ class Settings(BaseSettings):
     
     supabase_key: Optional[str] = None
 
+    sightengine_api_user: Optional[str] = None
+    
+    sightengine_api_secret: Optional[str] = None
+
     class Config:
         env_file = ".env"
         case_sensitive = False

@@ -71,6 +71,19 @@ class EmailAnalysisResponse(BaseModel):
     verdict: str               # One-sentence plain English verdict
     recommendation: str
 
+# ─── Media Detection ──────────────────────────────────────────────────────────
+
+class MediaScanResponse(BaseModel):
+    media_type: str
+    filename: str
+    risk_score: int
+    risk_label: str
+    verdict: str
+    recommendation: str
+    ai_generated_score: Optional[float] = None
+    deepfake_score: Optional[float] = None
+    ai_voice_score: Optional[float] = None
+
 
 # ─── Unified / Combined ──────────────────────────────────────────────────────
 

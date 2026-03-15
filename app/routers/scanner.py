@@ -1,28 +1,28 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Depends
 from app.models.schemas import LinkScanRequest, LinkScanResponse
-from app.services import scanner_service, gemini_service
+from app.services import scanner_service, supabase_service
+from app.middleware.auth import get_optional_user
 from app.utils.url_extractor import is_valid_url
 
 router = APIRouter()
 
 
 @router.post("/link", response_model=LinkScanResponse)
-async def scan_link(request: LinkScanRequest):
-    """
-    Scan a URL against Google Safe Browsing and VirusTotal.
-    Returns a unified risk score and plain-English verdict.
-    """
+async def scan_link(request: LinkScanRequest, user=Depends(get_optional_user)):
     if not is_valid_url(request.url):
         raise HTTPException(status_code=422, detail="Invalid URL format.")
 
-    # Run both checks — if one fails, degrade gracefully
+    cached = supabase_service.get_cached_url(request.url)
+    if cached:
+        print(f"[CACHE HIT] {request.url}")
+        return LinkScanResponse(**cached["result"])
+
     gsb_flags = []
     vt_result = None
 
     try:
         gsb_flags = await scanner_service.check_google_safe_browsing(request.url)
     except Exception as e:
-        # Log but don't fail — we'll still run VirusTotal
         print(f"[WARN] Google Safe Browsing failed: {e}")
 
     try:
@@ -34,7 +34,6 @@ async def scan_link(request: LinkScanRequest):
         gsb_flags, vt_result
     )
 
-    # Build human-readable verdict
     if is_safe:
         verdict = "This URL appears safe based on our checks."
         recommendation = "You can proceed, but always stay cautious with unfamiliar links."
@@ -50,7 +49,7 @@ async def scan_link(request: LinkScanRequest):
         verdict = "This URL shows some suspicious signals. Proceed with caution."
         recommendation = "Avoid entering any personal information on this site."
 
-    return LinkScanResponse(
+    response = LinkScanResponse(
         url=request.url,
         is_safe=is_safe,
         risk_score=risk_score,
@@ -60,3 +59,20 @@ async def scan_link(request: LinkScanRequest):
         verdict=verdict,
         recommendation=recommendation,
     )
+
+    try:
+        supabase_service.save_cached_url(
+            url=request.url,
+            risk_score=risk_score,
+            risk_label=risk_label,
+            result=response.model_dump(),
+        )
+    except Exception as e:
+        print(f"[WARN] Could not cache URL result: {e}")
+
+    return response
+
+    try:
+        vt_result = await scanner_service.scan_url_virustotal(request.url)
+    except Exception as e:
+        print(f"[WARN] VirusTotal scan failed: {e}")  # check terminal for this
