@@ -1,15 +1,14 @@
 {
-  "builds": [
+  "projects": [
     {
-      "src": "client/**",
-      "use": "@vercel/static-build",
-      "config": { "distDir": "dist" }
+      "name": "frontend",
+      "rootDirectory": "client",
+      "buildCommand": "npm run build",
+      "outputDirectory": "dist",
+      "installCommand": "npm install",
+      "devCommand": "npm run dev"
     }
   ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/client/$1"
-    }
-  ]
+  "buildCommand": null,
+  "installCommand": null
 }
