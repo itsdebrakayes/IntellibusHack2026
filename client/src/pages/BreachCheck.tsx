@@ -155,20 +155,24 @@ const BreachCheck: React.FC = () => {
 
   // DYNAMIC CALCULATIONS - Update when lookupResult changes
   // Switch between checked email or default dashboard
-  const currentData = lookupResult ? [lookupResult] : mockAccounts;
+  // When lookupResult exists AND has breaches, use it; otherwise use mockAccounts
+  const isShowingLookup = lookupResult && lookupResult.breaches !== undefined;
+  const currentData = isShowingLookup ? [lookupResult] : mockAccounts;
   
   // Calculate base metrics
   const totalBreaches = currentData.reduce((sum, a) => sum + a.breaches, 0);
-  const avgScore = lookupResult 
-    ? lookupResult.score 
+  const avgScore = isShowingLookup 
+    ? lookupResult!.score 
     : Math.round(mockAccounts.reduce((sum, a) => sum + a.score, 0) / mockAccounts.length);
   
   // Calculate exposure breakdown
   const exposureMap = new Map<string, number>();
   currentData.forEach((account) => {
-    account.exposedData.forEach((type) => {
-      exposureMap.set(type, (exposureMap.get(type) || 0) + 1);
-    });
+    if (account.exposedData && Array.isArray(account.exposedData)) {
+      account.exposedData.forEach((type) => {
+        exposureMap.set(type, (exposureMap.get(type) || 0) + 1);
+      });
+    }
   });
   
   // Build display data
@@ -179,7 +183,7 @@ const BreachCheck: React.FC = () => {
   const totalExposure = dynamicExposureData.reduce((s, d) => s + d.value, 0);
   
   // Calculate risk percentages
-  const hasExposedData = lookupResult?.exposedData.length && lookupResult.exposedData.length > 0;
+  const hasExposedData = isShowingLookup && lookupResult!.exposedData && lookupResult!.exposedData.length > 0;
   const emailRisk = hasExposedData 
     ? Math.round((lookupResult!.exposedData.filter(d => d === "Email").length / lookupResult!.exposedData.length) * 100)
     : 64;
@@ -187,13 +191,24 @@ const BreachCheck: React.FC = () => {
     ? Math.round((lookupResult!.exposedData.filter(d => d === "Password").length / lookupResult!.exposedData.length) * 100)
     : 42;
   
-  // Build dynamic stat cards
+  // Build dynamic stat cards - NOW uses actual totalBreaches (3 when looking up, 5 on dashboard)
   const dynamicStatCards = [
     { label: "Total Threats", value: String(totalBreaches), icon: Shield, color: "cyber-red" },
     { label: "Email Risk", value: `${emailRisk}%`, icon: Mail, color: "cyber-light-blue" },
     { label: "Password Risk", value: `${passwordRisk}%`, icon: Key, color: "cyber-yellow" },
-    { label: "Data Leaks", value: String(totalExposure > 0 ? totalExposure : mockAccounts.length), icon: Database, color: "cyber-teal" },
+    { label: "Data Leaks", value: String(totalExposure > 0 ? totalExposure : totalBreaches), icon: Database, color: "cyber-teal" },
   ];
+
+  // Helper function to extract exposed data types from breaches
+  const extractExposedTypes = (breaches: any[]): string[] => {
+    const types = new Set<string>();
+    breaches.forEach((b: any) => {
+      if (b.data_classes && Array.isArray(b.data_classes)) {
+        b.data_classes.forEach((dc: string) => types.add(dc));
+      }
+    });
+    return Array.from(types).length > 0 ? Array.from(types) : ["Email"];
+  };
 
   const handleLookup = async () => {
   if (!lookupEmail.trim()) return;
@@ -223,17 +238,6 @@ const BreachCheck: React.FC = () => {
   } finally {
     setIsChecking(false);
   }
-};
-
-// Helper function to extract exposed data types from breaches
-const extractExposedTypes = (breaches: any[]): string[] => {
-  const types = new Set<string>();
-  breaches.forEach((b: any) => {
-    if (b.data_classes && Array.isArray(b.data_classes)) {
-      b.data_classes.forEach((dc: string) => types.add(dc));
-    }
-  });
-  return Array.from(types).length > 0 ? Array.from(types) : ["Email"];
 };
 
   if (isMobile) return <MobileBreachCheck />;
