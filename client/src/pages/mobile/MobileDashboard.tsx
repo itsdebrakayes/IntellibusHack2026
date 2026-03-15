@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Video, Image, Mic, Mail, Link as LinkIcon, ShieldAlert,
+  Video, Image, Mail, Link as LinkIcon, ShieldAlert,
   AlertTriangle, CheckCircle, ArrowRight, Plus, Sparkles, Bell,
 } from "lucide-react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
@@ -44,7 +44,6 @@ const pieColors = [
 const serviceCards = [
   { title: "Video", description: "Deepfake detection", icon: Video, path: "/video-detection", tone: "video" },
   { title: "Image", description: "AI artifact scan", icon: Image, path: "/image-detection", tone: "image" },
-  { title: "Audio", description: "Synthetic voice", icon: Mic, path: "/audio-detection", tone: "audio" },
   { title: "Email", description: "Phishing analysis", icon: Mail, path: "/email-analysis", tone: "email" },
   { title: "Links", description: "URL scanner", icon: LinkIcon, path: "/link-scanner", tone: "link" },
   { title: "Breach", description: "Credential check", icon: ShieldAlert, path: "/breach-check", tone: "breach" },

@@ -12,7 +12,6 @@ import Dashboard from "@/pages/Dashboard";
 import LinkScanner from "@/pages/LinkScanner";
 import ImageDetection from "@/pages/ImageDetection";
 import VideoDetection from "@/pages/VideoDetection";
-import AudioDetection from "@/pages/AudioDetection";
 import EmailAnalysis from "@/pages/EmailAnalysis";
 import BreachCheck from "@/pages/BreachCheck";
 import Settings from "@/pages/Settings";
@@ -41,7 +40,6 @@ const App = () => (
               <Route path="/link-scanner" element={<ProtectedLayout><LinkScanner /></ProtectedLayout>} />
               <Route path="/image-detection" element={<ProtectedLayout><ImageDetection /></ProtectedLayout>} />
               <Route path="/video-detection" element={<ProtectedLayout><VideoDetection /></ProtectedLayout>} />
-              <Route path="/audio-detection" element={<ProtectedLayout><AudioDetection /></ProtectedLayout>} />
               <Route path="/email-analysis" element={<ProtectedLayout><EmailAnalysis /></ProtectedLayout>} />
               <Route path="/breach-check" element={<ProtectedLayout><BreachCheck /></ProtectedLayout>} />
               <Route path="/settings" element={<ProtectedLayout><Settings /></ProtectedLayout>} />
