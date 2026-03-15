@@ -157,7 +157,14 @@ const BreachCheck: React.FC = () => {
   // Switch between checked email or default dashboard
   // When lookupResult exists AND has breaches, use it; otherwise use mockAccounts
   const isShowingLookup = lookupResult && lookupResult.breaches !== undefined;
-  const currentData = isShowingLookup ? [lookupResult] : mockAccounts;
+  
+  if (isShowingLookup) {
+    console.log("✅ SHOWING LOOKUP MODE - lookupResult:", lookupResult);
+  } else {
+    console.log("📊 SHOWING DASHBOARD MODE - lookupResult:", lookupResult);
+  }
+  
+  const currentData = isShowingLookup ? [lookupResult!] : mockAccounts;
   
   // Calculate base metrics
   const totalBreaches = currentData.reduce((sum, a) => sum + a.breaches, 0);
@@ -198,6 +205,15 @@ const BreachCheck: React.FC = () => {
     { label: "Password Risk", value: `${passwordRisk}%`, icon: Key, color: "cyber-yellow" },
     { label: "Data Leaks", value: String(totalExposure > 0 ? totalExposure : totalBreaches), icon: Database, color: "cyber-teal" },
   ];
+  
+  console.log("📊 Stat Cards Being Rendered:", {
+    totalBreaches,
+    emailRisk,
+    passwordRisk,
+    totalExposure,
+    isShowingLookup,
+    dynamicStatCards,
+  });
 
   // Helper function to extract exposed data types from breaches
   const extractExposedTypes = (breaches: any[]): string[] => {
@@ -220,11 +236,22 @@ const BreachCheck: React.FC = () => {
       body: JSON.stringify({ email: lookupEmail }),
     });
     
+    console.log("=== API Response ===");
+    console.log("Full response:", JSON.stringify(data, null, 2));
+    console.log("breach_count:", data.breach_count);
+    console.log("risk_score:", data.risk_score);
+    console.log("exposed_data_types:", data.exposed_data_types);
+    console.log("breaches array:", data.breaches);
+    
+    // Extract exposed types from breaches if not provided
+    const exposedTypesFromBreaches = extractExposedTypes(data.breaches || []);
+    console.log("Extracted exposed types:", exposedTypesFromBreaches);
+    
     // Transform API response to component format
     const transformed: LookupResult = {
       score: data.risk_score || 0,
       breaches: data.breach_count || 0,
-      exposedData: data.exposed_data_types || extractExposedTypes(data.breaches || []),
+      exposedData: (data.exposed_data_types && data.exposed_data_types.length > 0) ? data.exposed_data_types : exposedTypesFromBreaches,
       recentBreaches: data.breaches?.map((b: any) => ({
         source: b.name || b.domain || "Unknown",
         date: b.breach_date || b.date || "Unknown",
@@ -232,9 +259,15 @@ const BreachCheck: React.FC = () => {
       })) || [],
     };
     
+    console.log("=== Transformed Result ===");
+    console.log("score:", transformed.score);
+    console.log("breaches:", transformed.breaches);
+    console.log("exposedData:", transformed.exposedData);
+    console.log("Full transformed:", JSON.stringify(transformed, null, 2));
+    
     setLookupResult(transformed);
   } catch (err) {
-    console.error(err);
+    console.error("Lookup Error:", err);
   } finally {
     setIsChecking(false);
   }
