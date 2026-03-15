@@ -7,7 +7,7 @@ import RiskGauge from "@/components/RiskGauge";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { useIsMobile } from "@/hooks/use-mobile";
 import MobileBreachCheck from "@/pages/mobile/MobileBreachCheck";
-import {api} from "@/lib/api";
+import {api} from "../lib/api";
 
 const mockLookupResults = [
   {
