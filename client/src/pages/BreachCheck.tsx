@@ -1,13 +1,13 @@
-import React, { useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { ShieldAlert, Search, Plus, Trash2, AlertTriangle, Lock, Eye, Mail, Phone, Globe, Loader2, Shield, Database, Key } from "lucide-react";
+import RiskGauge from "@/components/RiskGauge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import RiskGauge from "@/components/RiskGauge";
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { api } from "@/lib/app";
 import MobileBreachCheck from "@/pages/mobile/MobileBreachCheck";
-import {api} from "../lib/api";
+import { AnimatePresence, motion } from "framer-motion";
+import { AlertTriangle, Database, Eye, Globe, Key, Loader2, Lock, Mail, Phone, Plus, Search, Shield, ShieldAlert, Trash2 } from "lucide-react";
+import React, { useState } from "react";
+import { Bar, BarChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 
 const mockLookupResults = [
   {
