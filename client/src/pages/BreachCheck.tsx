@@ -7,6 +7,7 @@ import RiskGauge from "@/components/RiskGauge";
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import { useIsMobile } from "@/hooks/use-mobile";
 import MobileBreachCheck from "@/pages/mobile/MobileBreachCheck";
+import {api} from "@/lib/api";
 
 const mockLookupResults = [
   {
@@ -156,16 +157,22 @@ const BreachCheck: React.FC = () => {
   const avgScore = Math.round(mockAccounts.reduce((sum, a) => sum + a.score, 0) / mockAccounts.length);
   const totalExposure = exposureData.reduce((s, d) => s + d.value, 0);
 
-  const handleLookup = () => {
-    if (!lookupEmail.trim()) return;
-    setIsChecking(true);
-    setLookupResult(null);
-    setTimeout(() => {
-      const result = mockLookupResults[Math.floor(Math.random() * mockLookupResults.length)];
-      setLookupResult(result);
-      setIsChecking(false);
-    }, 1800);
-  };
+  const handleLookup = async () => {
+  if (!lookupEmail.trim()) return;
+  setIsChecking(true);
+  setLookupResult(null);
+  try {
+    const data = await api("/api/breach/check", {
+      method: "POST",
+      body: JSON.stringify({ email: lookupEmail }),
+    });
+    setLookupResult(data);
+  } catch (err) {
+    console.error(err);
+  } finally {
+    setIsChecking(false);
+  }
+};
 
   if (isMobile) return <MobileBreachCheck />;
 

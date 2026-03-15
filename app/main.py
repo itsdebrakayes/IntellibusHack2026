@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.routers import breach, scanner, analysis, auth, user, media
+import os
 
 app = FastAPI(
     title="Cyber Shield API",
@@ -10,7 +11,10 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://intellibus-hack2026.vercel.app/",
+        "http://localhost:8080",  # for local dev
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -26,3 +30,8 @@ app.include_router(media.router, prefix="/api/media", tags=["Media Detection"])
 @app.get("/")
 def root():
     return {"status": "API is running"}
+
+origins = [
+    os.getenv("FRONTEND_URL", "http://localhost:8080"),
+    "http://localhost:8080",
+]
