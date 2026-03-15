@@ -3,7 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.routers import breach, scanner, analysis, auth, user, media
 
 app = FastAPI(
-    title="BreachBuddy API",
+    title="Cyber Shield API",
     description="Your personal cyber safety hub.",
     version="1.0.0"
 )

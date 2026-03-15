@@ -103,6 +103,10 @@ def calculate_link_risk_score(
     gsb_flags: List[str],
     vt_result: Optional[VirusTotalResult]
 ) -> Tuple[int, str, bool]:
+    """
+    Combine GSB and VirusTotal signals into a single 0-100 risk score.
+    Returns (score, label, is_safe)
+    """
     score = 0
 
     # Google Safe Browsing is high-confidence — weight heavily
@@ -113,18 +117,10 @@ def calculate_link_risk_score(
     if "UNWANTED_SOFTWARE" in gsb_flags:
         score += 40
 
-    # VirusTotal — improved scoring
+    # VirusTotal contribution
     if vt_result:
-        if vt_result.malicious_count >= 15:
-            score += 70
-        elif vt_result.malicious_count >= 10:
-            score += 55
-        elif vt_result.malicious_count >= 5:
-            score += 40
-        elif vt_result.malicious_count >= 2:
-            score += 25
-        elif vt_result.malicious_count >= 1:
-            score += 15
+        vt_ratio = vt_result.malicious_count / max(vt_result.total_engines, 1)
+        score += int(vt_ratio * 40)  # Up to 40 points from VT
 
     score = min(score, 100)
     is_safe = score < 20
