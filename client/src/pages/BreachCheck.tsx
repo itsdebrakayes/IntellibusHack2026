@@ -204,12 +204,36 @@ const BreachCheck: React.FC = () => {
       method: "POST",
       body: JSON.stringify({ email: lookupEmail }),
     });
-    setLookupResult(data);
+    
+    // Transform API response to component format
+    const transformed: LookupResult = {
+      score: data.risk_score || 0,
+      breaches: data.breach_count || 0,
+      exposedData: data.exposed_data_types || extractExposedTypes(data.breaches || []),
+      recentBreaches: data.breaches?.map((b: any) => ({
+        source: b.name || b.domain || "Unknown",
+        date: b.breach_date || b.date || "Unknown",
+        records: b.records_count?.toString() || "Unknown",
+      })) || [],
+    };
+    
+    setLookupResult(transformed);
   } catch (err) {
     console.error(err);
   } finally {
     setIsChecking(false);
   }
+};
+
+// Helper function to extract exposed data types from breaches
+const extractExposedTypes = (breaches: any[]): string[] => {
+  const types = new Set<string>();
+  breaches.forEach((b: any) => {
+    if (b.data_classes && Array.isArray(b.data_classes)) {
+      b.data_classes.forEach((dc: string) => types.add(dc));
+    }
+  });
+  return Array.from(types).length > 0 ? Array.from(types) : ["Email"];
 };
 
   if (isMobile) return <MobileBreachCheck />;
