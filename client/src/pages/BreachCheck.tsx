@@ -171,14 +171,14 @@ const BreachCheck: React.FC = () => {
   }));
   const totalExposure = exposureDataDynamic.reduce((s, d) => s + d.value, 0);
 
-  const emailRisk = lookupResult ? Math.round((lookupResult.exposedData.filter(d => d === "Email").length / lookupResult.exposedData.length) * 100) : 64;
-  const passwordRisk = lookupResult ? Math.round((lookupResult.exposedData.filter(d => d === "Password").length / lookupResult.exposedData.length) * 100) : 42;
+  const emailRisk = lookupResult && lookupResult.exposedData.length > 0 ? Math.round((lookupResult.exposedData.filter(d => d === "Email").length / lookupResult.exposedData.length) * 100) : 64;
+  const passwordRisk = lookupResult && lookupResult.exposedData.length > 0 ? Math.round((lookupResult.exposedData.filter(d => d === "Password").length / lookupResult.exposedData.length) * 100) : 42;
 
   const dynamicStatCards = [
     { label: "Total Threats", value: totalBreaches.toString(), icon: Shield, color: "cyber-red" },
     { label: "Email Risk", value: `${emailRisk}%`, icon: Mail, color: "cyber-light-blue" },
     { label: "Password Risk", value: `${passwordRisk}%`, icon: Key, color: "cyber-yellow" },
-    { label: "Data Leaks", value: String(lookupResult?.breaches || mockAccounts.length), icon: Database, color: "cyber-teal" },
+    { label: "Data Leaks", value: String(lookupResult?.breaches || totalExposure), icon: Database, color: "cyber-teal" },
   ]
 
   const handleLookup = async () => {
